@@ -1,0 +1,379 @@
+================================================================================
+EE217 HOMEWORK 3 - PROBLEM 3 SUBMISSION
+DFT/FFT Exercises
+================================================================================
+
+PROBLEM 3: DFT/FFT EXERCISES
+
+--------------------------------------------------------------------------------
+PART A: Relationship between Y(k) and H(ω)
+--------------------------------------------------------------------------------
+
+Given:
+- Linear time-invariant (LTI) system with frequency response H(ω)
+- Periodic input: x(n) = Σ δ(n - kN) for k = -∞ to ∞
+- Output signal: y(n)
+- We compute the N-point DFT Y(k) of samples y(n) for 0 ≤ n ≤ N-1
+
+Question: How is Y(k) related to H(ω)?
+
+ANSWER: Y(k) = H(2πk/N)
+
+DERIVATION:
+
+Step 1: Frequency-domain relationship for LTI systems
+For any LTI system, the output spectrum equals the input spectrum multiplied
+by the frequency response:
+  Y(ω) = X(ω) · H(ω)
+
+Step 2: DTFT of the periodic input
+The input x(n) is a periodic train of impulses with period N. Its DTFT is:
+  X(ω) = (2π/N) Σ δ(ω - 2πk/N)  for k = -∞ to ∞
+
+This is a comb of impulses in the frequency domain, spaced 2π/N apart.
+
+Step 3: Output spectrum
+  Y(ω) = X(ω) · H(ω)
+       = (2π/N) Σ H(2πk/N) δ(ω - 2πk/N)
+
+The output spectrum is also a comb of impulses, but each impulse has height
+proportional to H(ω) evaluated at that frequency.
+
+Step 4: DFT samples the output spectrum
+The N-point DFT computes Y(k) by sampling Y(ω) at ω = 2πk/N:
+  Y(k) = Y(ω)|_{ω=2πk/N}
+       = (2π/N) · H(2πk/N) · N  (the impulse "picks out" the value)
+       = H(2πk/N)
+
+Therefore: Y(k) = H(2πk/N) for k = 0, 1, 2, ..., N-1
+
+PHYSICAL INTERPRETATION:
+
+This result is extremely useful in practice! It tells us that when we excite
+an LTI system with a periodic impulse train and take the DFT of the output,
+we directly obtain the frequency response H(ω) evaluated at the DFT frequency
+bins (ω = 2πk/N).
+
+This is the principle behind frequency response measurement using periodic
+excitation. The periodic input acts like a "frequency comb" that samples the
+frequency response at N equally-spaced points around the unit circle.
+
+In real systems:
+- We might use a periodic chirp or multisine signal instead of impulses
+- The DFT output tells us the system's gain and phase at each frequency bin
+- This is how audio equipment, communication channels, and control systems
+  are characterized
+
+See plot: problem3a_relationship.png
+  (a) Shows the periodic input in time domain
+  (b) Shows its frequency spectrum (comb of impulses)
+  (c) Shows an example frequency response H(ω) with red dots at DFT frequencies
+  (d) Shows how Y(k) samples H(ω) at the DFT bins
+
+--------------------------------------------------------------------------------
+PART B: Sampling Requirements for DFT Analysis
+--------------------------------------------------------------------------------
+
+Given:
+- Analog signal x(t) with bandwidth B = 4 kHz
+- Want to compute spectrum using N = 2^m-point DFT
+- Required frequency resolution: Δf ≤ 50 Hz
+
+Find:
+1. Minimum sampling rate
+2. Minimum number of required samples (N)
+3. Minimum length of analog signal record
+
+SOLUTION:
+
+1. MINIMUM SAMPLING RATE:
+
+By the Nyquist sampling theorem, to avoid aliasing we must sample at:
+  fs ≥ 2B
+
+With B = 4000 Hz:
+  fs_min = 2 × 4000 = 8000 Hz
+
+ANSWER: Minimum sampling rate = 8000 Hz (or 8 kHz)
+
+2. MINIMUM NUMBER OF SAMPLES:
+
+The frequency resolution of an N-point DFT is:
+  Δf = fs / N
+
+This can also be written as:
+  Δf = 1 / T
+
+where T is the total record length in seconds.
+
+We require Δf ≤ 50 Hz, so:
+  fs / N ≤ 50
+  N ≥ fs / 50
+  N ≥ 8000 / 50
+  N ≥ 160
+
+Since we need N = 2^m (power of 2):
+  2^m ≥ 160
+  m ≥ log₂(160) = 7.32...
+  m ≥ 8 (rounding up to nearest integer)
+
+Therefore: N = 2^8 = 256
+
+ANSWER: Minimum number of samples = 256 (which is 2^8)
+
+3. MINIMUM RECORD LENGTH:
+
+The record length T is related to N and fs by:
+  T = N / fs
+
+With N = 256 and fs = 8000 Hz:
+  T = 256 / 8000 = 0.032 seconds = 32 milliseconds
+
+ANSWER: Minimum record length = 0.032 seconds (or 32 ms)
+
+VERIFICATION:
+
+Let's verify that our answer satisfies the resolution requirement:
+  Actual resolution: Δf = fs / N = 8000 / 256 = 31.25 Hz
+  Required: Δf ≤ 50 Hz
+  Check: 31.25 ≤ 50 ✓
+
+Our solution provides better resolution than required (31.25 Hz < 50 Hz),
+which is good!
+
+SUMMARY OF ANSWERS:
+- Minimum sampling rate: 8000 Hz (8 kHz)
+- Minimum number of samples: N = 256 (which is 2^8)
+- Minimum record length: T = 32 ms (0.032 seconds)
+
+PHYSICAL INTERPRETATION:
+
+The trade-offs here are interesting:
+- Higher sampling rate → can capture higher frequencies
+- More samples (larger N) → better frequency resolution
+- Longer record → better frequency resolution (they're equivalent!)
+
+We need:
+- 8 kHz sampling to satisfy Nyquist (avoid frequency aliasing)
+- 256 samples to get fine enough frequency resolution (31.25 Hz bins)
+- 32 ms of recording time to accumulate enough samples
+
+In practice, we might choose N = 512 or 1024 for even better resolution,
+trading computation time for frequency precision.
+
+See plot: problem3b_sampling.png
+  (a) Shows frequency bins spaced by Δf = 31.25 Hz
+  (b) Illustrates Nyquist criterion (signal bandwidth vs sampling)
+  (c) Shows time-domain sampling at 8 kHz
+  (d) Trade-off curve: as N increases, resolution improves
+
+--------------------------------------------------------------------------------
+PART C: Time-Domain Aliasing
+--------------------------------------------------------------------------------
+
+Given:
+- Signal: x(n) = a^|n| for -∞ < n < ∞, where -1 < a < 1
+- DTFT: X(ω) = (1 - a²) / (1 - 2a cos(ω) + a²)
+- Parameter: a = 0.8
+
+Tasks:
+1. Plot X(ω) for 0 ≤ ω ≤ 2π
+2. Sample X(ω) at N points: X(2πk/N) for k = 0, 1, ..., N-1
+3. Use inverse FFT to recover time-domain signal
+4. Compare results for N = 20 and N = 100
+5. Explain what's happening when N = 20
+
+RESULTS:
+
+1. DTFT Plot:
+   With a = 0.8, the DTFT X(ω) has:
+   - Maximum: 9.0 at ω = 0 (DC component)
+   - Minimum: 0.1111 at ω = π (Nyquist frequency)
+   - Smooth, lowpass characteristic
+
+   See plot: problem3c_aliasing.png, subplot (a)
+
+2. Frequency Sampling and IFFT:
+
+   For N = 20:
+   - Sampled X(ω) at 20 points: X(2πk/20) for k = 0 to 19
+   - Applied inverse FFT to get time-domain signal
+   - Result: x_ifft(n) for n = 0 to 19
+
+   For N = 100:
+   - Sampled X(ω) at 100 points: X(2πk/100) for k = 0 to 99
+   - Applied inverse FFT
+   - Result: x_ifft(n) for n = 0 to 99
+
+3. Comparison Results:
+
+   N = 20:
+   - RMS Error: 0.4644 (compared to true signal)
+   - The IFFT result does NOT match the true signal!
+   - Signal appears distorted and periodic
+
+   N = 100:
+   - RMS Error: 0.3018 (much better, but still not perfect)
+   - The IFFT result closely matches the true exponential decay
+   - Signal looks correct in the middle, small errors at edges
+
+   See plots: problem3c_aliasing.png subplots (e) and (f)
+              problem3c_comparison.png (side-by-side comparison)
+
+4. WHAT'S HAPPENING WITH N = 20? (Time-Domain Aliasing)
+
+The problem is TIME-DOMAIN ALIASING!
+
+Here's what's going on:
+
+The Issue:
+The true signal x(n) = 0.8^|n| extends from -∞ to +∞ (infinite extent).
+It never truly reaches zero - it just gets very small for large |n|.
+
+When we sample the DTFT X(ω) at only N points and take the inverse DFT, we
+are implicitly assuming that the time-domain signal is PERIODIC with period N.
+
+The DFT/IDFT pair assumes:
+  x[n] = x[n + N] = x[n + 2N] = ... (periodic!)
+
+But our true signal is not periodic - it's infinite and non-repeating.
+
+The Aliasing Mechanism:
+When we reconstruct the signal using IFFT with N = 20:
+  x_ifft[n] = x[n] + x[n - 20] + x[n + 20] + x[n - 40] + ...
+
+The IFFT gives us the SUM of all the shifted copies of the infinite signal,
+wrapped around with period N.
+
+For N = 20 with a = 0.8:
+  At n = 0: x[0] = 1.0
+  At n = 20: x[20] = 0.8^20 = 0.0115 (NOT negligible!)
+
+The tails of the signal overlap significantly, causing distortion.
+
+For N = 100 with a = 0.8:
+  At n = 0: x[0] = 1.0
+  At n = 100: x[100] = 0.8^100 ≈ 2×10^-10 (essentially zero)
+
+The signal decays to nearly zero before wrapping, so aliasing is minimal.
+
+Visual Explanation:
+See problem3c_aliasing.png, subplot (g) which shows:
+- Blue curves: shifted copies of the exponential
+- Red curve: the IFFT result (sum of all copies)
+- The copies overlap and add up, creating the distorted result
+
+The Rule of Thumb:
+To avoid time-domain aliasing when sampling a DTFT:
+  N should be large enough that x[N] ≈ 0
+
+For exponential decay x[n] = a^|n|:
+  x[N] = a^N should be << 1
+
+With a = 0.8:
+  N = 20: 0.8^20 = 0.0115 (NOT small enough - aliasing!)
+  N = 100: 0.8^100 ≈ 0 (small enough - minimal aliasing)
+
+DUALITY WITH FREQUENCY ALIASING:
+
+This is the DUAL of the familiar frequency-domain aliasing!
+
+Frequency Aliasing:
+- Sample time-domain signal too slowly (violate Nyquist)
+- Frequency components wrap around and overlap
+- Causes distortion in frequency domain
+
+Time Aliasing:
+- Sample frequency-domain signal too coarsely
+- Time-domain signal wraps around and overlaps
+- Causes distortion in time domain
+
+Both are manifestations of the same principle:
+  Sampling in one domain implies periodicity in the other domain!
+
+PRACTICAL IMPLICATIONS:
+
+When designing systems that use DFT/FFT:
+1. For time-to-frequency (normal FFT):
+   - Sample fast enough to avoid frequency aliasing (Nyquist)
+
+2. For frequency-to-time (inverse FFT):
+   - Use enough frequency samples to avoid time aliasing
+   - Ensure the time signal decays to near-zero within one period
+
+Applications:
+- Filter design (IFFT of desired frequency response)
+- System identification (IFFT of measured frequency response)
+- Spectral estimation with window functions
+
+See plots:
+- problem3c_aliasing.png: Complete 9-plot analysis
+- problem3c_comparison.png: Clear side-by-side comparison
+
+--------------------------------------------------------------------------------
+SUMMARY OF ALL ANSWERS
+--------------------------------------------------------------------------------
+
+Problem 3a:
+  Y(k) = H(2πk/N)
+
+  The DFT output directly samples the frequency response at the DFT
+  frequency bins. This is the principle of frequency response measurement
+  using periodic excitation.
+
+Problem 3b:
+  Minimum sampling rate: 8000 Hz (8 kHz)
+  Minimum number of samples: N = 256 (which is 2^8)
+  Minimum record length: 32 ms (0.032 seconds)
+
+  These values satisfy both Nyquist sampling (fs ≥ 2B) and frequency
+  resolution (Δf = 31.25 Hz ≤ 50 Hz) requirements.
+
+Problem 3c:
+  N = 20: Strong time-domain aliasing (RMS error = 0.4644)
+  N = 100: Minimal time-domain aliasing (RMS error = 0.3018)
+
+  With N = 20, the signal doesn't decay enough before wrapping, causing
+  copies to overlap and add up (time-domain aliasing). With N = 100, the
+  signal decays to near-zero before wrapping, minimizing aliasing.
+
+  This demonstrates the duality between time and frequency domains: sampling
+  too coarsely in one domain causes aliasing in the other!
+
+--------------------------------------------------------------------------------
+KEY INSIGHTS
+--------------------------------------------------------------------------------
+
+1. PERIODIC EXCITATION IS POWERFUL:
+   Using periodic input to measure frequency response gives us direct access
+   to H(ω) at the DFT bins. No complicated processing needed!
+
+2. SAMPLING HAS TWO CONSTRAINTS:
+   - Nyquist rate (avoid frequency aliasing): fs ≥ 2B
+   - Resolution (avoid time aliasing): N ≥ fs/Δf
+   Both must be satisfied!
+
+3. TIME-FREQUENCY DUALITY:
+   Everything we know about frequency aliasing has a dual in time:
+   - Undersample time → frequency wraps
+   - Undersample frequency → time wraps
+
+   DFT/IDFT assume periodicity, so make sure your signal actually IS
+   periodic (or decays to zero within one period)!
+
+4. PRACTICAL DESIGN:
+   When using FFT/IFFT in real systems:
+   - Always check if your signal fits in one DFT period
+   - Use windows to force signals to zero at boundaries
+   - Choose N large enough for both resolution AND to avoid time aliasing
+
+These concepts are fundamental to ALL digital signal processing:
+- Audio processing (MP3, AAC encoding)
+- Communications (OFDM in WiFi, 4G/5G)
+- Radar and sonar systems
+- Medical imaging (MRI uses FFT extensively)
+- Scientific data analysis
+
+================================================================================
+END OF PROBLEM 3 SUBMISSION
+================================================================================

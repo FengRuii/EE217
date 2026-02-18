@@ -1,0 +1,273 @@
+================================================================================
+EE217 HOMEWORK 3 - PROBLEM 2 SUBMISSION
+CDMA-Based Touch Sensors
+================================================================================
+
+PROBLEM 2: CDMA-BASED TOUCH SENSORS
+
+--------------------------------------------------------------------------------
+PART A: CORRELATION ANALYSIS - NO TOUCH BASELINE
+--------------------------------------------------------------------------------
+
+Method:
+I generated the PRBS511 sequence using polynomial 0x110 with initial state 257
+(as specified in the problem). Then I correlated the no-touch sense waveform
+with this PRBS code at all possible time shifts (0 to 510 samples).
+
+The correlation reveals 5 distinct peaks, one for each of the 5 drive lines.
+Each drive line uses a different phase (time shift) of the same PRBS511 code,
+which makes them orthogonal to each other - this is the key to CDMA!
+
+Results - 5 Correlation Peaks Found:
+
+  Peak #1: Position = 21 samples
+           Correlation value = 40.64
+           Capacitance = 0.0795 (normalized)
+
+  Peak #2: Position = 151 samples
+           Correlation value = 36.69
+           Capacitance = 0.0718 (normalized)
+
+  Peak #3: Position = 276 samples
+           Correlation value = 76.32
+           Capacitance = 0.1493 (normalized)
+
+  Peak #4: Position = 341 samples
+           Correlation value = 51.33
+           Capacitance = 0.1004 (normalized)
+
+  Peak #5: Position = 432 samples
+           Correlation value = 53.62
+           Capacitance = 0.1049 (normalized)
+
+What this means:
+- The "position" is the time delay (phase offset) for each drive line
+- The "capacitance" is the normalized correlation value (correlation / 511)
+- Each drive line has a different capacitance value because the physical
+  sensor design has different coupling between each drive-sense pair
+
+See plot: problem2_complete_analysis.png, subplot (d) shows all 5 peaks clearly
+
+--------------------------------------------------------------------------------
+PART B: TOUCH LOCATION DETECTION
+--------------------------------------------------------------------------------
+
+Method:
+I loaded the touch data file and performed the same correlation analysis to
+find the capacitances at each of the 5 drive line positions. Then I computed
+the change in capacitance (touch - baseline) for each position.
+
+The finger acts like a conductor that shunts some of the electric field to
+ground, which REDUCES the mutual capacitance between the drive and sense lines.
+So we're looking for the biggest NEGATIVE change.
+
+Results - Touch Correlation Peaks (Same 5 Positions):
+
+  Peak #1: Position = 21 samples
+           Correlation value = 36.18
+           Capacitance = 0.0708 (normalized)
+
+  Peak #2: Position = 151 samples
+           Correlation value = 14.32
+           Capacitance = 0.0280 (normalized)
+
+  Peak #3: Position = 276 samples
+           Correlation value = 55.04
+           Capacitance = 0.1077 (normalized)
+
+  Peak #4: Position = 341 samples
+           Correlation value = 45.83
+           Capacitance = 0.0897 (normalized)
+
+  Peak #5: Position = 432 samples
+           Correlation value = 54.32
+           Capacitance = 0.1063 (normalized)
+
+Comparison Table (No Touch vs Touch):
+
+  Position | No Touch Cap | Touch Cap | Change     | Physical Location
+  ---------|--------------|-----------|------------|------------------
+  21 samp  | 0.0795      | 0.0708    | -0.0087    | 5 mm
+  151 samp | 0.0718      | 0.0280    | -0.0439 ** | 10 mm ← TOUCH!
+  276 samp | 0.1493      | 0.1077    | -0.0416    | 15 mm
+  341 samp | 0.1004      | 0.0897    | -0.0108    | 20 mm
+  432 samp | 0.1049      | 0.1063    | +0.0014    | 25 mm
+
+Capacitance Changes Summary:
+
+  Position 1 (5 mm):   Change = -0.0087  (small change)
+  Position 2 (10 mm):  Change = -0.0439  *** BIGGEST CHANGE ***
+  Position 3 (15 mm):  Change = -0.0416  (large but not biggest)
+  Position 4 (20 mm):  Change = -0.0108  (small change)
+  Position 5 (25 mm):  Change = +0.0014  (essentially no change)
+
+ANSWER: The touch is located at Position 2 = 10 mm
+
+Physical Interpretation:
+The biggest capacitance drop is at the 10 mm position, which makes sense - this
+is where the finger is directly blocking the electric field between drive and
+sense lines. The neighboring position (15 mm) also shows a significant drop
+because the finger has some physical width and affects nearby sensors too.
+
+Gaussian Fit:
+Since the finger has a physical size, the touch response should be Gaussian
+in space. I fit a Gaussian curve to the 5 capacitance change measurements:
+
+  Gaussian center: 12.45 mm
+  Gaussian width (σ): 4.09 mm
+  Peak amplitude: -0.0515
+
+The Gaussian center (12.45 mm) is close to 10 mm, which confirms our detection.
+The slight offset might be because the finger isn't perfectly centered or
+because we only have 5 measurement points (5 mm spacing).
+
+The width of 4.09 mm makes sense for a fingertip - it suggests the touch
+affects a region of about ±8 mm (±2σ), which is reasonable for a finger.
+
+See plots:
+- problem2_complete_analysis.png, subplot (g): bar chart shows the big drop
+- problem2_complete_analysis.png, subplot (h): Gaussian fit
+- problem2_touch_detection.png: focused visualization of touch detection
+
+--------------------------------------------------------------------------------
+NOISE ESTIMATION
+--------------------------------------------------------------------------------
+
+Method:
+To estimate the noise level, I looked at the correlation values away from the
+5 peaks (excluding ±50 samples around each peak). These off-peak regions should
+contain mostly noise since there's no signal there.
+
+Results:
+  Noise mean: -0.001162 (close to zero, as expected)
+  Noise standard deviation: 0.001172
+
+Answer: Noise per sample = 0.0012 (approximately)
+
+Signal-to-Noise Ratio:
+The touch signal (capacitance change) is -0.0439
+The noise level is 0.0012
+SNR = 0.0439 / 0.0012 = 37.4
+
+This is excellent! An SNR of 37.4 means the signal is 37 times stronger than
+the noise. This is why CDMA works so well - the correlation process provides
+"processing gain" that suppresses noise.
+
+Processing Gain Explanation:
+When we correlate with a 511-bit code, we're essentially averaging over 511
+samples. Random noise averages out, while the signal adds up coherently.
+The processing gain is √N = √511 ≈ 22.6, which means the noise is reduced
+by this factor. That's why we can still detect the touch even in the presence
+of noise!
+
+See plot: problem2_complete_analysis.png, subplot (i) shows noise distribution
+
+--------------------------------------------------------------------------------
+HOW THE WHOLE SYSTEM WORKS (THE BIG PICTURE)
+--------------------------------------------------------------------------------
+
+1. TRANSMISSION:
+   All 5 drive lines transmit their PRBS codes simultaneously. Each drive uses
+   the same PRBS511 sequence but with a different time delay (phase offset).
+   This makes them orthogonal - like speaking different languages.
+
+2. MIXING:
+   The sense line receives a MIXED signal - contributions from all 5 drives
+   are added together, plus noise. It looks like garbage!
+
+3. CORRELATION:
+   To extract each drive's contribution, we correlate the mixed signal with
+   the PRBS code at different time shifts. When the shift matches a drive's
+   phase, we get a strong peak. When it doesn't match, the orthogonality
+   causes cancellation and we get near zero.
+
+4. CAPACITANCE MEASUREMENT:
+   The height of each peak tells us the capacitance between that drive line
+   and the sense line. This is the "mutual capacitance."
+
+5. TOUCH DETECTION:
+   When a finger touches, it acts like a conductor connected to ground. This
+   creates an alternate path for the electric field, which reduces the mutual
+   capacitance. We detect the touch by comparing to the baseline and finding
+   the biggest change.
+
+6. NOISE REJECTION:
+   The correlation provides processing gain that suppresses noise. Even though
+   the raw signal is noisy, the correlation output has high SNR because we're
+   averaging over 511 samples.
+
+This is exactly how your smartphone touch screen works! Modern phones use
+longer codes (like PRBS511 or even longer) and more drive lines (maybe 20-30),
+but the principle is identical.
+
+--------------------------------------------------------------------------------
+KEY INSIGHTS
+--------------------------------------------------------------------------------
+
+1. ORTHOGONALITY IS MAGIC:
+   By using different phases of the same PRBS code, all 5 drives can transmit
+   at once without interfering. Correlation separates them perfectly. This is
+   the core idea behind CDMA (Code Division Multiple Access).
+
+2. PROCESSING GAIN:
+   The correlation with a long code (511 bits) provides noise rejection. The
+   gain is √511 ≈ 22.6, meaning the SNR improves by 27 dB. This is why CDMA
+   systems can work even with weak signals buried in noise.
+
+3. SPATIAL RESOLUTION:
+   With 5 drive lines spaced 5 mm apart, we can detect touch location to within
+   about 5 mm. By fitting a Gaussian, we can actually get sub-5mm precision
+   (12.45 mm in this case).
+
+4. PHYSICAL MECHANISM:
+   The finger doesn't add capacitance - it reduces it! The finger shunts the
+   electric field to ground, which decreases the mutual capacitance between
+   drive and sense lines. That's why we see negative changes.
+
+5. REAL-WORLD APPLICATION:
+   This homework problem isn't just academic - this is EXACTLY how capacitive
+   touch sensors work in smartphones, tablets, laptops, and touchpads. Every
+   time you swipe your phone, CDMA correlation is happening underneath!
+
+--------------------------------------------------------------------------------
+PLOTS REFERENCE
+--------------------------------------------------------------------------------
+
+Main comprehensive plot: problem2_complete_analysis.png
+  (a) Raw sense signal - no touch
+  (b) Raw sense signal - with touch
+  (c) PRBS511 reference code (first 100 bits)
+  (d) Correlation - no touch (5 peaks visible)
+  (e) Correlation - with touch
+  (f) Capacitance comparison bar chart
+  (g) Capacitance changes vs position (touch detection)
+  (h) Gaussian fit for precise location
+  (i) Noise distribution
+
+Focused touch detection plot: problem2_touch_detection.png
+  Left: Capacitance changes with Gaussian fit
+  Right: Before/after comparison at each drive line
+
+--------------------------------------------------------------------------------
+SUMMARY OF ANSWERS
+--------------------------------------------------------------------------------
+
+Part A:
+  5 correlation peaks found at delays: 21, 151, 276, 341, 432 samples
+  Corresponding capacitances: 0.0795, 0.0718, 0.1493, 0.1004, 0.1049
+
+Part B:
+  Touch location: 10 mm (Position 2, Drive line 2)
+  Gaussian fit center: 12.45 mm
+  Maximum capacitance change: -0.0439 (61% reduction)
+
+Noise:
+  Noise standard deviation: 0.0012 per sample
+  Signal-to-noise ratio: 37.4
+
+The system successfully detects the touch location with high precision and
+excellent noise rejection, demonstrating the power of CDMA techniques!
+
+================================================================================
+END OF PROBLEM 2 SUBMISSION
+================================================================================

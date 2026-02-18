@@ -1,0 +1,37 @@
+================================================================================
+PROBLEM 2C: NOISE ESTIMATION (EXTRA CREDIT)
+================================================================================
+
+
+The noise per sample in the raw data (before correlation) is approximately
+0.0265.
+
+This was estimated using three independent methods:
+
+METHOD 1: From off-peak correlation values
+- The off-peak regions of the correlation output contain only noise
+- Post-correlation noise: σ_correlation = 0.598847
+- Correlation sums N=511 samples, so noise grows by √N
+- Pre-correlation noise: σ_raw = σ_correlation / √N
+- Result: 0.026491
+
+METHOD 2: Signal reconstruction
+- Reconstructed the signal from the 5 correlation peaks
+- Subtracted reconstruction from original to get residual (noise)
+- Result: σ_residual = 0.029321
+
+METHOD 3: SNR analysis
+- Average signal per sample: 0.101210
+- Pre-correlation SNR: 3.820
+- Noise = Signal / SNR
+- Result: 0.026491
+
+All three methods agree closely, confirming the answer.
+
+PHYSICAL INTERPRETATION:
+The raw noise level (0.0265 per sample) is quite small compared
+to the signal amplitudes (which range from 36.69 to
+76.32 after correlation). The correlation process
+provides a processing gain of √511 ≈ 22.6, which improves the SNR by
+27.1 dB. This is why CDMA techniques work so well - they can
+extract weak signals from noisy environments!

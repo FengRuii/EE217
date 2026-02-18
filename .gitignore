@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+*/venv/
+*/HW3/
+pyvenv.cfg
+
+# Virtual environments in subdirectories
+ee217/Lab1/bin/
+ee217/Lab1/lib/
+ee217/Lab1/include/
+ee217/Lab1/pyvenv.cfg
+HW3/HW3/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Environment
+.env
+.env.local
