@@ -4,19 +4,12 @@ __pycache__/
 *$py.class
 *.so
 .Python
+
+# Virtual environments
 env/
 venv/
 .venv/
-*/venv/
-*/HW3/
-pyvenv.cfg
-
-# Virtual environments in subdirectories
-ee217/Lab1/bin/
-ee217/Lab1/lib/
-ee217/Lab1/include/
-ee217/Lab1/pyvenv.cfg
-HW3/HW3/
+ee217/Lab1/
 
 # macOS
 .DS_Store
@@ -31,6 +24,9 @@ HW3/HW3/
 
 # Jupyter
 .ipynb_checkpoints/
+
+# Build artifacts
+*.o
 
 # Environment
 .env
